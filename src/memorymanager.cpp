@@ -39,7 +39,7 @@ void MemoryManager::write(word addr, byte data)
 
 void MemoryManager::reset()
 {
-    m_memory.fill(127);
+    m_memory.fill(0);
 }
 
 } // namespace i8080

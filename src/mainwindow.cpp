@@ -96,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent) :
         m_cpu.interrupt(0xD7); // RST 10
     });
 
-    m_cpu.run(0);
+    //m_cpu.run(0);
 
 }
 
