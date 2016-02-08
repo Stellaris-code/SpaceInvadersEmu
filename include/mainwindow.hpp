@@ -25,6 +25,7 @@
 
 #include "cpu.hpp"
 #include  "screen.hpp"
+#include "opcodes.hpp"
 
 #include "ui_mainwindow.h"
 

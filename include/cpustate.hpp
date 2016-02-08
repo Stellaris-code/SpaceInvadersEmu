@@ -33,17 +33,19 @@
 namespace i8080
 {
 
+class MemoryManager;
+
 struct State
 {
         std::array<byte, 8> registers {};
-        byte* const B { &registers[0] };
-        byte* const C { &registers[1] };
-        byte* const D { &registers[2] };
-        byte* const E { &registers[3] };
-        byte* const H { &registers[4] };
-        byte* const L { &registers[5] };
-        byte* const A { &registers[6] };
-        byte* const F { &registers[7] };
+        byte& B { registers[0] };
+        byte& C { registers[1] };
+        byte& D { registers[2] };
+        byte& E { registers[3] };
+        byte& H { registers[4] };
+        byte& L { registers[5] };
+        byte& A { registers[6] };
+        byte& F { registers[7] };
 
         word* const BC { reinterpret_cast<word* const>(B) };
         word* const DE { reinterpret_cast<word* const>(D) };
@@ -53,7 +55,7 @@ struct State
         word sp { 0 };
         word pc { 0 };
 
-        MemoryManager mem {};
+        MemoryManager mem;
 
         IOManager io {};
 
@@ -62,19 +64,9 @@ struct State
         bool interrupt { false };
         byte interrupt_opcode { 0 };
 
+        bool halt_flag { false };
 
-
-        void reset()
-        {
-            registers.fill(0);
-            sp = 0;
-            pc = 0;
-            mem.reset();
-            io.reset();
-            int_enabled = true;
-            interrupt = false;
-            interrupt_opcode = 0;
-        }
+        void reset();
 };
 
 typedef std::function<unsigned int(byte, State&)> opcodeCallback;

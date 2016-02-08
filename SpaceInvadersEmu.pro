@@ -25,7 +25,9 @@ SOURCES += src/screen.cpp \
     src/opcodedefinition.cpp \
     src/iomanager.cpp \
     src/memorymanager.cpp \
-    src/cpu.cpp
+    src/cpu.cpp \
+    src/utility.cpp \
+    src/cpustate.cpp
 
 HEADERS += include/screen.hpp \
    include/mainwindow.hpp \
@@ -38,7 +40,8 @@ HEADERS += include/screen.hpp \
     include/cpu.hpp \
     include/nano-signal/nano_function.hpp \
     include/nano-signal/nano_observer.hpp \
-    include/nano-signal/nano_signal_slot.hpp
+    include/nano-signal/nano_signal_slot.hpp \
+    include/opcodes.hpp
 
 FORMS    += ui/mainwindow.ui
 

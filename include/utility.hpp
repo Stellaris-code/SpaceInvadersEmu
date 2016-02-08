@@ -19,6 +19,7 @@
 #define UTILITY_HPP
 
 #include <cctype>
+#include <climits>
 
 #include <algorithm>
 #include <chrono>
@@ -27,9 +28,12 @@
 #include <thread>
 
 #include "common.hpp"
+#include "cpustate.hpp"
 
 namespace i8080
 {
+
+struct State;
 
 template <typename Function>
 inline void executeForDuration(std::chrono::duration<double> time, Function&& func)
@@ -54,6 +58,13 @@ inline T wrap(T kX, T kLowerBound, T kUpperBound)
         kX += range_size * ((kLowerBound - kX) / range_size + 1);
 
     return kLowerBound + (kX - kLowerBound) % range_size;
+}
+
+inline bool parity(byte input)
+{
+    input ^= input >> 4;
+    input &= 0xF;
+    return (0x6996 >> input) & 1;
 }
 
 
@@ -85,9 +96,102 @@ inline void toggleBit(byte& input, size_t pos)
     input ^= 1 << pos;
 }
 
+inline bool getFlagS(byte flags)
+{
+    return getBit(flags, 7);
+}
+inline void setFlagS(byte& flags, bool val)
+{
+    setBit(flags, 7, val);
+}
+
+inline bool getFlagZ(byte flags)
+{
+    return getBit(flags, 6);
+}
+inline void setFlagZ(byte& flags, bool val)
+{
+    setBit(flags, 6, val);
+}
+
+inline bool getFlagAC(byte flags)
+{
+    return getBit(flags, 4);
+}
+inline void setFlagAC(byte& flags, bool val)
+{
+    setBit(flags, 4, val);
+}
+
+inline bool getFlagP(byte flags)
+{
+    return getBit(flags, 2);
+}
+inline void setFlagP(byte& flags, bool val)
+{
+    setBit(flags, 2, val);
+}
+
+inline bool getFlagC(byte flags)
+{
+    return getBit(flags, 0);
+}
+inline void setFlagC(byte& flags, bool val)
+{
+    setBit(flags, 0, val);
+}
+
+inline bool sign(byte val)
+{
+    return getBit(val, 7);
+}
+
+
+void checkACarry(byte& flags, unsigned int val, const State& state);
+
+inline void checkSign(byte& flags, byte val)
+{
+    setFlagS(flags, sign(val));
+}
+inline void checkZero(byte& flags, unsigned int val)
+{
+    setFlagZ(flags, val == 0);
+}
+inline void checkCarry(byte& flags, unsigned int val)
+{
+    setFlagC(flags, (val & 0x100) != 0);
+}
+inline void checkParity(byte& flags, byte val)
+{
+    setFlagAC(flags, parity(val));
+}
+
+inline byte rotl(byte x, unsigned int n)
+{
+  const decltype(n) mask = (CHAR_BIT*sizeof(x)-1);
+  assert (n<=mask && "rotate by more than type width");
+  n &= mask;  // avoid undef behaviour with NDEBUG.  0 overhead for most types / compilers
+  return (x<<n) | (x>>( (-n)&mask ));
+}
+
+inline byte rotr(byte x, unsigned int n)
+{
+  const decltype(n) mask = (CHAR_BIT*sizeof(x)-1);
+  assert (n<=mask && "rotate by more than type width");
+  n &= mask;  // avoid undef behaviour with NDEBUG.  0 overhead for most types / compilers
+  return (x>>n) | (x<<( (-n)&mask ));
+}
+
 
 namespace Opcode
 {
+
+byte fetchByte(State& state);
+word fetchWord(State& state);
+
+byte readReg(unsigned int index, const State& state);
+
+void writeReg(unsigned int index, byte val, State& state);
 
 inline byte getDdd(byte opcode)
 {

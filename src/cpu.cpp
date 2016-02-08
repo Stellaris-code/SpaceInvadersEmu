@@ -32,31 +32,42 @@ void CPU::reset()
 
 void CPU::loadRom(const std::string& h, const std::string& g, const std::string& f, const std::string& e)
 {
-    bool sucess = false;
     QFile file_h(QString::fromStdString(h));
-    sucess &= file_h.open(QIODevice::ReadOnly);
+    if(!file_h.open(QIODevice::ReadOnly))
+    {
+        error("Cannot open rom 1 : " + file_h.errorString().toStdString() + " : " +
+              std::to_string(file_h.error()));
+    }
     QFile file_g(QString::fromStdString(g));
-    sucess &= file_g.open(QIODevice::ReadOnly);
+    if(!file_g.open(QIODevice::ReadOnly))
+    {
+        error("Cannot open rom 2 : " + file_g.errorString().toStdString() + " : " +
+              std::to_string(file_h.error()));
+    }
     QFile file_f(QString::fromStdString(f));
-    sucess &= file_f.open(QIODevice::ReadOnly);
+    if(!file_f.open(QIODevice::ReadOnly))
+    {
+        error("Cannot open rom 3 : " + file_f.errorString().toStdString() + " : " +
+              std::to_string(file_h.error()));
+    }
     QFile file_e(QString::fromStdString(e));
-    sucess &= file_e.open(QIODevice::ReadOnly);
-
-    if (!sucess)
+    if(!file_e.open(QIODevice::ReadOnly))
     {
-        emu_error("Cannot open rom files !");
+        error("Cannot open rom 4 : " + file_e.errorString().toStdString() + " : " +
+              std::to_string(file_h.error()));
     }
-    else
-    {
-        std::copy(file_h.readAll().cbegin(), file_h.readAll().cend(),
-                  m_state.mem.begin());
-        std::copy(file_g.readAll().cbegin(), file_h.readAll().cend(),
-                  m_state.mem.begin() + 0x800);
-        std::copy(file_f.readAll().cbegin(), file_h.readAll().cend(),
-                  m_state.mem.begin() + 0x1000);
-        std::copy(file_e.readAll().cbegin(), file_h.readAll().cend(),
-                  m_state.mem.begin() + 0x1800);
-    }
+    QByteArray hContents = file_h.readAll();
+    std::copy(hContents.constBegin(), hContents.constEnd(),
+              m_state.mem.begin());
+    QByteArray gContents = file_g.readAll();
+    std::copy(gContents.constBegin(), gContents.constEnd(),
+              m_state.mem.begin() + 0x800);
+    QByteArray fContents = file_f.readAll();
+    std::copy(fContents.constBegin(), fContents.constEnd(),
+              m_state.mem.begin() + 0x1000);
+    QByteArray eContents = file_e.readAll();
+    std::copy(eContents.constBegin(), eContents.constEnd(),
+              m_state.mem.begin() + 0x1800);
 }
 
 unsigned int CPU::step()
@@ -67,22 +78,32 @@ unsigned int CPU::step()
     if (m_state.int_enabled && m_state.interrupt)
     {
         interrupted = true;
+        m_state.halt_flag = false;
         m_state.int_enabled = false;
         m_state.interrupt = false;
         opcode = m_state.interrupt_opcode;
         m_state.interrupt_opcode = 0;
     }
 
-    for (auto opcodeDef : m_opcodes)
+    if (!m_state.halt_flag)
     {
-        if (opcodeDef.isMatching(opcode))
+
+        for (auto opcodeDef : m_opcodes)
         {
-            auto clockCycles = executeOpcode(opcodeDef, opcode);
-            return clockCycles;
+            if (opcodeDef.isMatching(opcode))
+            {
+                auto clockCycles = executeOpcode(opcodeDef, opcode);
+                return clockCycles;
+            }
         }
+
     }
-    error((QString("Illegal instruction : 0x") + QString::number(opcode, 16) +  " (Address : 0x" +
-                  QString::number(m_state.pc - 1, 16) + ") " + (interrupted ? " (interruption)" : "")).toStdString());
+    else
+    {
+        return 1;
+    }
+    error((QString("Illegal instruction : 0x") + QString::number(opcode, 16) + "/" + QString::number(opcode, 2) +
+           (interrupted ? " (interruption)" :  " (Address : 0x" + QString::number(m_state.pc - 1, 16) + ")")).toStdString());
 }
 
 void CPU::run(unsigned int cycles)

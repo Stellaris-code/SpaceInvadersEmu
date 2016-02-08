@@ -21,7 +21,6 @@
 #include <array>
 
 #include "common.hpp"
-#include "utility.hpp"
 
 namespace i8080
 {
@@ -51,6 +50,8 @@ class MemoryManager
         { return m_memory.data(); }
         const byte* cend() const
         { return m_memory.cend(); }
+        const byte* ROM() const
+        { return cbegin(); }
         const byte* RAM() const
         { return cbegin() + 0x2000; }
         const byte* VRAM() const

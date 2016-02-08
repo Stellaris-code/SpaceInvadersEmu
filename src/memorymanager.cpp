@@ -17,6 +17,8 @@
 */
 #include "memorymanager.hpp"
 
+#include "utility.hpp"
+
 namespace i8080
 {
 
@@ -27,6 +29,10 @@ byte MemoryManager::read(word addr) const
 
 void MemoryManager::write(word addr, byte data)
 {
+    if (addr < c_ROMAddr)
+    {
+        error("Tried to write to ROM ! (Addr : " + std::to_string(addr) + ")");
+    }
     if (addr < c_RAMMirrorAddr)
     {
         m_memory[addr] = data;
