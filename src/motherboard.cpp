@@ -1,4 +1,4 @@
-/*  cpustate %{Cpp:License:ClassName} - Yann BOUCHER (yann) 07/02/2016
+/*  src/motherboard.cpp Motherboard - Yann BOUCHER (yann) 11/02/2016
 **
 **
 **            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
@@ -15,23 +15,11 @@
 **
 **  0. You just DO WHAT THE FUCK YOU WANT TO.
 */
+#include "motherboard.hpp"
 
-#include "cpustate.hpp"
-
-namespace i8080
+Motherboard::Motherboard()
 {
-
-void State::reset()
-{
-    registers.fill(0);
-    F = 2; //  00000010
-    sp = 0;
-    pc = 0x100;
-    mem.reset();
-    io.reset();
-    interrupt = false;
-    interrupt_opcode = 0;
-    int_enabled = true;
+    m_cpu.clockSpeed = clockSpeed();
+    registerIOPorts();
 }
 
-} // namespace i8080

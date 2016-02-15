@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setKeyboardInputInterval(0);
+    QCoreApplication::setApplicationName("Space Invaders");
     MainWindow w;
     w.show();
 

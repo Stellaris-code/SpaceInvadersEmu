@@ -26,6 +26,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QPropertyAnimation>
 
 #include <QWidget>
 #include <QSize>
@@ -36,6 +37,7 @@
 class Screen : public QWidget
 {
         Q_OBJECT
+        Q_PROPERTY(qreal pauseOpacity MEMBER m_pauseOpacity)
 
     public:
         explicit Screen(QWidget *parent = 0);
@@ -51,29 +53,56 @@ class Screen : public QWidget
         void stopRendering()
         { m_renderingEnabled = false; }
 
-    protected:
-        virtual void paintEvent(QPaintEvent *) override;
-
-    private:
-        void render();
-
     signals:
         void VBlankMiddle();
         void VBlank();
 
+    protected:
+        virtual void paintEvent(QPaintEvent *) override;
+
     public slots:
         void setColorOverlay(bool val)
         { m_drawColorMask = val; }
+        void setBackgroundImage(bool val)
+        { m_drawBackground = val; }
+        void setPaused(bool val)
+        {
+            m_paused = val;
+            m_pauseAnim.setDirection(val ? QAbstractAnimation::Forward : QAbstractAnimation::Backward);
+            m_pauseAnim.start();
+        }
+        void setScale(qreal scale)
+        {
+            setFixedSize(size() * scale);
+        }
+
+
+    private:
+        void render();
+
+        void setPauseOpacity(qreal val)
+        {
+            m_pauseOpacity = val;
+        }
+        qreal pauseOpacity() const
+        {
+            return m_pauseOpacity;
+        }
 
     private:
         QImage m_image;
         QImage m_overlay;
         QImage m_background;
+        QImage m_pauseIcon;
         bool m_drawColorMask { true };
+        bool m_drawBackground { false };
         QImage m_screen;
         std::atomic_bool m_renderingEnabled { false };
         std::atomic_bool m_killRendering { false };
+        std::atomic_bool m_paused { false };
         std::thread m_renderingThread;
+        QPropertyAnimation m_pauseAnim;
+        qreal m_pauseOpacity { 0 };
 };
 
 #endif // SCREEN_HPP

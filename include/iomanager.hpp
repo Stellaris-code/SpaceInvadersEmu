@@ -39,6 +39,9 @@ class IOManager
         void outb(byte port, byte data);
         void reset();
 
+        void mapInPort(byte port, std::function<byte(void)> callback);
+        void mapOutPort(byte port, std::function<void(byte)> callback);
+
     private:
         std::array<std::function<byte(void)>, 256> m_inports {};
         std::array<std::function<void(byte)>, 256> m_outports {};

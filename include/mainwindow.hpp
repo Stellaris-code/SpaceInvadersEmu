@@ -22,10 +22,15 @@
 #include <QTextStream>
 #include <QKeyEvent>
 #include <QMap>
+#include <QTimer>
+#include <QStatusBar>
+#include <QLabel>
+#include <QSettings>
 
 #include "cpu.hpp"
-#include  "screen.hpp"
+#include "screen.hpp"
 #include "opcodes.hpp"
+#include "invaders/invadersboard.hpp"
 
 #include "ui_mainwindow.h"
 
@@ -46,10 +51,19 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
         virtual void keyPressEvent(QKeyEvent *) override;
         virtual void keyReleaseEvent(QKeyEvent *) override;
         void changeEvent(QEvent *e) override;
+        virtual void closeEvent(QCloseEvent *) override;
+
+        void loadSettings();
+        void saveSettings() const;
 
     private:
         QMap<int, bool> m_activeKeys;
-        i8080::CPU m_cpu;
+        InvadersBoard m_board;
+        QLabel m_hiscoreLabel;
+        QLabel m_resetScore;
+        QLabel m_ipsLabel;
+        QTimer m_scoreUpdate;
+        unsigned int m_hiScore { 0 };
 };
 
 #endif // MAINWINDOW_HPP

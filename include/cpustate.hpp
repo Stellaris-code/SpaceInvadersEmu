@@ -38,19 +38,20 @@ class MemoryManager;
 struct State
 {
         std::array<byte, 8> registers {};
-        byte& B { registers[0] };
-        byte& C { registers[1] };
-        byte& D { registers[2] };
-        byte& E { registers[3] };
-        byte& H { registers[4] };
-        byte& L { registers[5] };
-        byte& A { registers[6] };
-        byte& F { registers[7] };
+        byte& C { registers[0] };
+        byte& B { registers[1] };
+        byte& E { registers[2] };
+        byte& D { registers[3] };
+        byte& L { registers[4] };
+        byte& H { registers[5] };
+        byte& F { registers[6] };
+        byte& A { registers[7] };
 
-        word* const BC { reinterpret_cast<word* const>(B) };
-        word* const DE { reinterpret_cast<word* const>(D) };
-        word* const HL { reinterpret_cast<word* const>(H) };
-        word* const AF { reinterpret_cast<word* const>(A) };
+
+        word& BC { reinterpret_cast<word&>(C) };
+        word& DE { reinterpret_cast<word&>(E) };
+        word& HL { reinterpret_cast<word&>(L) };
+        word& AF { reinterpret_cast<word&>(F) };
 
         word sp { 0 };
         word pc { 0 };

@@ -64,7 +64,7 @@ inline bool parity(byte input)
 {
     input ^= input >> 4;
     input &= 0xF;
-    return (0x6996 >> input) & 1;
+    return !((0x6996 >> input) & 1);
 }
 
 
@@ -149,9 +149,9 @@ inline bool sign(byte val)
 
 void checkACarry(byte& flags, unsigned int val, const State& state);
 
-inline void checkSign(byte& flags, byte val)
+inline void checkSign(byte& flags, unsigned int val)
 {
-    setFlagS(flags, sign(val));
+    setFlagS(flags, sign(val & 0xFF));
 }
 inline void checkZero(byte& flags, unsigned int val)
 {
@@ -161,9 +161,9 @@ inline void checkCarry(byte& flags, unsigned int val)
 {
     setFlagC(flags, (val & 0x100) != 0);
 }
-inline void checkParity(byte& flags, byte val)
+inline void checkParity(byte& flags, unsigned int val)
 {
-    setFlagAC(flags, parity(val));
+    setFlagP(flags, parity(val & 0xFF));
 }
 
 inline byte rotl(byte x, unsigned int n)
@@ -180,6 +180,13 @@ inline byte rotr(byte x, unsigned int n)
   assert (n<=mask && "rotate by more than type width");
   n &= mask;  // avoid undef behaviour with NDEBUG.  0 overhead for most types / compilers
   return (x>>n) | (x<<( (-n)&mask ));
+}
+
+inline word invertWord(word in)
+{
+    byte h = (in & 0xFF00) >> 8;
+    byte l = in & 0xFF;
+    return l << 8 | h;
 }
 
 

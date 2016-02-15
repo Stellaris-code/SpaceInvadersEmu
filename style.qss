@@ -650,7 +650,7 @@ QComboBox
 }
 
 QPushButton:checked{
-    background-color: #4A4949;
+    background-color: #31709E;
     border-color: #6A6969;
 }
 
@@ -1190,8 +1190,7 @@ QToolBox::tab {
  }
 
 QStatusBar::item {
-    border: 1px solid #3A3939;
-    border-radius: 2px;
+    border: none;
  }
 
 

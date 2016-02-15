@@ -43,4 +43,14 @@ void IOManager::reset()
 
 }
 
+void IOManager::mapInPort(byte port, std::function<byte(void)> callback)
+{
+    m_inports[port] = callback;
+}
+
+void IOManager::mapOutPort(byte port, std::function<void(byte)> callback)
+{
+    m_outports[port] = callback;
+}
+
 } // namespace i8080

@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui multimedia
 
 CONFIG += c++11
 
@@ -15,7 +15,7 @@ TEMPLATE = app
 
 DESTDIR=build
 
-QMAKE_CXXFLAGS += -Wextra
+QMAKE_CXXFLAGS += -Wextra -O2
 
 INCLUDEPATH += include
 
@@ -27,7 +27,11 @@ SOURCES += src/screen.cpp \
     src/memorymanager.cpp \
     src/cpu.cpp \
     src/utility.cpp \
-    src/cpustate.cpp
+    src/cpustate.cpp \
+    src/invaders/shiftregister.cpp \
+    src/motherboard.cpp \
+    src/invaders/invadersboard.cpp \
+    src/invaders/soundmanager.cpp
 
 HEADERS += include/screen.hpp \
    include/mainwindow.hpp \
@@ -38,10 +42,11 @@ HEADERS += include/screen.hpp \
     include/iomanager.hpp \
     include/memorymanager.hpp \
     include/cpu.hpp \
-    include/nano-signal/nano_function.hpp \
-    include/nano-signal/nano_observer.hpp \
-    include/nano-signal/nano_signal_slot.hpp \
-    include/opcodes.hpp
+    include/opcodes.hpp \
+    include/invaders/shiftregister.hpp \
+    include/motherboard.hpp \
+    include/invaders/invadersboard.hpp \
+    include/invaders/soundmanager.hpp
 
 FORMS    += ui/mainwindow.ui
 

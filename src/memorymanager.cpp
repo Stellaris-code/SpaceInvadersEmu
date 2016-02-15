@@ -24,23 +24,20 @@ namespace i8080
 
 byte MemoryManager::read(word addr) const
 {
-        return m_memory[addr];
+    if (Q_UNLIKELY(addr >= c_RAMMirrorAddr))
+    {
+        return read(wrap<word>(addr, c_ROMAddr, c_RAMMirrorAddr));
+    }
+    return m_memory[addr];
 }
 
 void MemoryManager::write(word addr, byte data)
 {
-    if (addr < c_ROMAddr)
+    if (Q_UNLIKELY(addr < c_RAMAddr))
     {
         error("Tried to write to ROM ! (Addr : " + std::to_string(addr) + ")");
     }
-    if (addr < c_RAMMirrorAddr)
-    {
-        m_memory[addr] = data;
-    }
-    else
-    {
-        write(wrap<word>(addr, 0, c_RAMMirrorAddr - 1), data);
-    }
+    m_memory[addr] = data;
 }
 
 void MemoryManager::reset()

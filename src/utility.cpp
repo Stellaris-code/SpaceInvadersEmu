@@ -57,11 +57,11 @@ byte readReg(unsigned int index, const State& state)
         case 0x05:
             return state.L;
         case 0x06:
-            return state.mem.read(*state.HL);
+            return state.mem.read(state.HL);
         case 0x07:
             return state.A;
         default:
-            return 0;
+            error("readReg : Invalid register pair");
     }
 }
 
@@ -82,9 +82,12 @@ void writeReg(unsigned int index, byte val, State& state)
         case 0x05:
             state.L = val; break;
         case 0x06:
-            state.mem.write(*state.HL, val); break;
+            state.mem.write(state.HL, val); break;
         case 0x07:
             state.A = val; break;
+
+        default:
+            error("writeReg : Invalid register pair");
     }
 }
 

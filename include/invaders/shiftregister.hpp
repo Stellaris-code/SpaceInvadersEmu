@@ -1,4 +1,4 @@
-/*  cpustate %{Cpp:License:ClassName} - Yann BOUCHER (yann) 07/02/2016
+/*  include/shiftregister.hpp ShiftRegister - Yann BOUCHER (yann) 10/02/2016
 **
 **
 **            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
@@ -15,23 +15,29 @@
 **
 **  0. You just DO WHAT THE FUCK YOU WANT TO.
 */
+#ifndef SHIFTREGISTER_HPP
+#define SHIFTREGISTER_HPP
 
-#include "cpustate.hpp"
+#include <cassert>
 
-namespace i8080
+#include "common.hpp"
+
+class ShiftRegister
 {
+    public:
+        ShiftRegister() = default;
 
-void State::reset()
-{
-    registers.fill(0);
-    F = 2; //  00000010
-    sp = 0;
-    pc = 0x100;
-    mem.reset();
-    io.reset();
-    interrupt = false;
-    interrupt_opcode = 0;
-    int_enabled = true;
-}
+    public:
+        void fill(byte val);
+        void offset(byte off);
 
-} // namespace i8080
+        void reset();
+
+        byte result() const;
+
+    private:
+        word m_data { 0 };
+        byte m_offset { 0 };
+};
+
+#endif // SHIFTREGISTER_HPP

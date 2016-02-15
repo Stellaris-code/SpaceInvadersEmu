@@ -20,13 +20,32 @@
 namespace i8080
 {
 
-CPU::CPU()
+CPU::CPU() : m_runStartPoint(std::chrono::steady_clock::now())
 {
     reset();
 }
 
+CPU::~CPU()
+{
+    m_resetting = true;
+    if (m_runThread.joinable())
+    {
+        m_runThread.join();
+    }
+}
+
 void CPU::reset()
 {
+    m_state.int_enabled = false;
+    m_resetting = true;
+    if (m_runThread.joinable())
+    {
+        m_runThread.join();
+    }
+    m_resetting = false;
+    m_totalSteps = 0;
+    m_runStartPoint = std::chrono::steady_clock::now();
+    m_paused = false;
     m_state.reset();
 }
 
@@ -72,10 +91,14 @@ void CPU::loadRom(const std::string& h, const std::string& g, const std::string&
 
 unsigned int CPU::step()
 {
+    if (Q_UNLIKELY(m_paused))
+    {
+        return 0;
+    }
     byte opcode = fetchOpcode(m_state.pc++);
     bool interrupted = false;
 
-    if (m_state.int_enabled && m_state.interrupt)
+    if (Q_UNLIKELY(m_state.interrupt && m_state.int_enabled))
     {
         interrupted = true;
         m_state.halt_flag = false;
@@ -83,9 +106,10 @@ unsigned int CPU::step()
         m_state.interrupt = false;
         opcode = m_state.interrupt_opcode;
         m_state.interrupt_opcode = 0;
+        m_state.pc--;
     }
 
-    if (!m_state.halt_flag)
+    if (Q_LIKELY(!m_state.halt_flag))
     {
 
         for (auto opcodeDef : m_opcodes)
@@ -100,37 +124,55 @@ unsigned int CPU::step()
     }
     else
     {
-        return 1;
+        return 0;
     }
     error((QString("Illegal instruction : 0x") + QString::number(opcode, 16) + "/" + QString::number(opcode, 2) +
            (interrupted ? " (interruption)" :  " (Address : 0x" + QString::number(m_state.pc - 1, 16) + ")")).toStdString());
 }
 
-void CPU::run(unsigned int cycles)
+void CPU::run(unsigned long long steps)
 {
-    std::thread([this, cycles]{
-
-        if (cycles == 0)
+    if (m_runThread.joinable())
+    {
+        m_runThread.join();
+    }
+    m_running = true;
+    m_runThread = std::thread([this, steps]{
+        if (steps == 0)
         {
             while(true)
             {
+                if (Q_UNLIKELY(m_resetting))
+                {
+                    m_resetting = false;
+                    m_running = false;
+                    return;
+                }
                 step();
+                ++m_totalSteps;
             }
         }
         else
         {
-            unsigned int totalCycles = 0;
-            while (totalCycles < cycles)
+            unsigned long long totalSteps = 0;
+            while (totalSteps < steps)
             {
-                totalCycles += step();
+                if (Q_UNLIKELY(m_resetting))
+                {
+                    m_resetting = false;
+                    m_running = false;
+                    return;
+                }
+                step();
+                m_totalSteps += ++totalSteps;
             }
         }
-    }).detach();
+    });
 }
 
-void CPU::interrupt(const byte& opcode)
+void CPU::interrupt(byte opcode)
 {
-    if (m_state.int_enabled)
+    if (Q_LIKELY(m_state.int_enabled))
     {
         m_state.interrupt = true;
         m_state.interrupt_opcode = opcode;

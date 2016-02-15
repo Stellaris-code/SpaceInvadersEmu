@@ -32,13 +32,13 @@ inline void registerOpcodes(CPU& cpu)
     // Carry bit instructions
 
     OpcodeDefinition cmc("00111111", [](byte, State& state) -> unsigned int {
-        setFlagS(state.F, !getFlagS(state.F));
+        setFlagC(state.F, !getFlagC(state.F));
         return 4;
     });
     cpu.registerOpcode(cmc);
 
     OpcodeDefinition stc("00110111", [](byte, State& state) -> unsigned int {
-        setFlagS(state.F, 1);
+        setFlagC(state.F, 1);
         return 4;
     });
     cpu.registerOpcode(stc);
@@ -46,32 +46,23 @@ inline void registerOpcodes(CPU& cpu)
     // Single register instructions
 
     OpcodeDefinition inr("00***100", [](byte opcode, State& state) -> unsigned int {
-        int result = Opcode::readReg(Opcode::getDdd(opcode), state)+1;
-        byte regResult = result & 0xFF;
-
-        setFlagAC(state.F, result > 255);
-        setFlagS(state.F, regResult > 127);
-        setFlagZ(state.F, regResult == 0);
-        setFlagP(state.F, parity(regResult));
-
-        Opcode::writeReg(Opcode::getDdd(opcode), regResult, state);
+        unsigned int result = Opcode::readReg(Opcode::getDdd(opcode), state)+1;
+        checkACarry(state.F, result, state);
+        checkSign(state.F, result);
+        checkZero(state.F, result);
+        checkParity(state.F, result);
+        Opcode::writeReg(Opcode::getDdd(opcode), result & 0xFF, state);
         return Opcode::getDdd(opcode) == 0x06 ? 10 : 5;
     });
     cpu.registerOpcode(inr);
 
     OpcodeDefinition dcr("00***101", [](byte opcode, State& state) -> unsigned int {
-        int result = Opcode::readReg(Opcode::getDdd(opcode), state)-1;
-        byte regResult = result & 0xFF;
-
-        if (result < 0)
-        {
-            regResult = 0;
-        }
+        unsigned int result = Opcode::readReg(Opcode::getDdd(opcode), state)-1;
         checkACarry(state.F, result, state);
-        checkSign(state.F, regResult);
+        checkSign(state.F, result);
         checkZero(state.F, result);
-        checkParity(state.F, regResult);
-        Opcode::writeReg(Opcode::getDdd(opcode), regResult, state);
+        checkParity(state.F, result);
+        Opcode::writeReg(Opcode::getDdd(opcode), result & 0xFF, state);
         return Opcode::getDdd(opcode) == 0x06 ? 10 : 5;
     });
     cpu.registerOpcode(dcr);
@@ -112,7 +103,7 @@ inline void registerOpcodes(CPU& cpu)
 
     // NOP instructions
 
-    OpcodeDefinition nop("00000000", [](byte, State&) -> unsigned int {
+    OpcodeDefinition nop("00***000", [](byte, State&) -> unsigned int {
         return 4;
     });
     cpu.registerOpcode(nop);
@@ -120,19 +111,19 @@ inline void registerOpcodes(CPU& cpu)
     // Data transfer instructions
 
     OpcodeDefinition mov("01******", [](byte opcode, State& state) -> unsigned int {
-        Opcode::writeReg(Opcode::getDdd(opcode), Opcode::getSss(opcode), state);
+        Opcode::writeReg(Opcode::getDdd(opcode), Opcode::readReg(Opcode::getSss(opcode), state), state);
         return Opcode::getDdd(opcode) == 0x06 ? 7 : 5;
     });
     cpu.registerOpcode(mov);
 
     OpcodeDefinition stax("000*0010", [](byte opcode, State& state) -> unsigned int {
-        state.mem.write(getBit(opcode, 4) ? *state.DE : *state.BC, state.A);
+        state.mem.write(getBit(opcode, 4) ? state.DE : state.BC, state.A);
         return 7;
     });
     cpu.registerOpcode(stax);
 
     OpcodeDefinition ldax("000*1010", [](byte opcode, State& state) -> unsigned int {
-        state.A = state.mem.read(getBit(opcode, 4) ? *state.DE : *state.BC);
+        state.A = state.mem.read(getBit(opcode, 4) ? state.DE : state.BC);
         return 7;
     });
     cpu.registerOpcode(ldax);
@@ -143,10 +134,10 @@ inline void registerOpcodes(CPU& cpu)
         byte val = Opcode::readReg(Opcode::getSss(opcode), state);
         checkACarry(state.F, state.A + val, state);
         checkCarry(state.F, state.A + val);
+        checkSign(state.F, state.A + val);
+        checkZero(state.F, state.A + val);
+        checkParity(state.F, state.A + val);
         state.A += val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A );
         return Opcode::getSss(opcode) == 0x06 ? 7 : 4;
     });
     cpu.registerOpcode(add);
@@ -155,10 +146,10 @@ inline void registerOpcodes(CPU& cpu)
         byte val = Opcode::readReg(Opcode::getSss(opcode), state) + getFlagC(state.F);
         checkACarry(state.F, state.A + val, state);
         checkCarry(state.F, state.A + val);
+        checkSign(state.F, state.A + val);
+        checkZero(state.F, state.A + val);
+        checkParity(state.F, state.A + val);
         state.A += val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A);
         return Opcode::getSss(opcode) == 0x06 ? 7 : 4;
     });
     cpu.registerOpcode(adc);
@@ -167,58 +158,58 @@ inline void registerOpcodes(CPU& cpu)
         byte val = Opcode::readReg(Opcode::getSss(opcode), state);
         checkACarry(state.F, state.A - val, state);
         checkCarry(state.F, state.A - val);
+        checkSign(state.F, state.A - val);
+        checkZero(state.F, state.A - val);
+        checkParity(state.F, state.A - val);
         state.A -= val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A);
         return Opcode::getSss(opcode) == 0x06 ? 7 : 4;
     });
     cpu.registerOpcode(sub);
 
     OpcodeDefinition sbb("10011***", [](byte opcode, State& state) -> unsigned int {
-        byte val = Opcode::readReg(Opcode::getSss(opcode) + getFlagC(state.F), state);
+        byte val = Opcode::readReg(Opcode::getSss(opcode), state) + getFlagC(state.F);
         checkACarry(state.F, state.A - val, state);
         checkCarry(state.F, state.A - val);
+        checkSign(state.F, state.A - val);
+        checkZero(state.F, state.A - val);
+        checkParity(state.F, state.A - val);
         state.A -= val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A);
         return Opcode::getSss(opcode) == 0x06 ? 7 : 4;
     });
     cpu.registerOpcode(sbb);
 
     OpcodeDefinition ana("10100***", [](byte opcode, State& state) -> unsigned int {
         byte val = Opcode::readReg(Opcode::getSss(opcode), state);
-        checkACarry(state.F, state.A & val, state);
-        checkSign(state.F, state.A & val);
-        checkZero(state.F, state.A & val);
-        checkParity(state.F, state.A & val);
-        setFlagC(state.F, 0);
         state.A &= val;
+        checkACarry(state.F, state.A, state);
+        checkSign(state.F, state.A);
+        checkZero(state.F, state.A);
+        checkParity(state.F, state.A);
+        setFlagC(state.F, 0);
         return Opcode::getSss(opcode) == 0x06 ? 7 : 4;
     });
     cpu.registerOpcode(ana);
 
     OpcodeDefinition xra("10101***", [](byte opcode, State& state) -> unsigned int {
         byte val = Opcode::readReg(Opcode::getSss(opcode), state);
-        checkACarry(state.F, state.A ^ val, state);
-        checkSign(state.F, state.A ^ val);
-        checkZero(state.F, state.A ^ val);
-        checkParity(state.F, state.A ^ val);
-        setFlagC(state.F, 0);
         state.A ^= val;
+        checkACarry(state.F, state.A, state);
+        checkSign(state.F, state.A);
+        checkZero(state.F, state.A);
+        checkParity(state.F, state.A);
+        setFlagC(state.F, 0);
         return Opcode::getSss(opcode) == 0x06 ? 7 : 4;
     });
     cpu.registerOpcode(xra);
 
     OpcodeDefinition ora("10110***", [](byte opcode, State& state) -> unsigned int {
         byte val = Opcode::readReg(Opcode::getSss(opcode), state);
-        checkACarry(state.F, state.A | val, state);
-        checkSign(state.F, state.A | val);
-        checkZero(state.F, state.A | val);
-        checkParity(state.F, state.A | val);
-        setFlagC(state.F, 0);
         state.A |= val;
+        checkSign(state.F, state.A);
+        checkZero(state.F, state.A);
+        checkParity(state.F, state.A);
+        checkACarry(state.F, state.A, state);
+        setFlagC(state.F, 0);
         return Opcode::getSss(opcode) == 0x06 ? 7 : 4;
     });
     cpu.registerOpcode(ora);
@@ -242,6 +233,14 @@ inline void registerOpcodes(CPU& cpu)
         return 4;
     });
     cpu.registerOpcode(rlc);
+
+
+    OpcodeDefinition rrc("00001111", [](byte, State& state) -> unsigned int {
+        setFlagC(state.F, getBit(state.A, 0));
+        state.A = rotr(state.A, 1);
+        return 4;
+    });
+    cpu.registerOpcode(rrc);
 
     OpcodeDefinition ral("00010111", [](byte, State& state) -> unsigned int {
         bool oldC = getFlagC(state.F);
@@ -269,16 +268,16 @@ inline void registerOpcodes(CPU& cpu)
         switch (pair)
         {
             case 0:
-                value = *state.BC;
+                value = state.BC;
                 break;
             case 1:
-                value = *state.DE;
+                value = state.DE;
                 break;
             case 2:
-                value = *state.HL;
+                value = state.HL;
                 break;
             case 3:
-                value = *(state.AF);
+                value = state.AF;
                 break;
         }
         state.mem.write(--state.sp, (value >> 8) & 0xFF);
@@ -295,16 +294,16 @@ inline void registerOpcodes(CPU& cpu)
         switch (pair)
         {
             case 0:
-                *state.BC = value;
+                state.BC = value;
                 break;
             case 1:
-                *state.DE = value;
+                state.DE = value;
                 break;
             case 2:
-                *state.HL = value;
+                state.HL = value;
                 break;
             case 3:
-                *state.AF = value;
+                state.AF = value;
                 break;
         }
         return 10;
@@ -317,21 +316,21 @@ inline void registerOpcodes(CPU& cpu)
         switch (pair)
         {
             case 0:
-                value = *state.BC;
+                value = state.BC;
                 break;
             case 1:
-                value = *state.DE;
+                value = state.DE;
                 break;
             case 2:
-                value = *state.HL;
+                value = state.HL;
                 break;
             case 3:
                 value = state.sp;
                 break;
         }
 
-        setFlagC(state.F, value + *state.HL > 0xFFFF);
-        *state.HL += value;
+        setFlagC(state.F, unsigned(value + state.HL) > 0xFFFF);
+        state.HL += value;
         return 10;
     });
     cpu.registerOpcode(dad);
@@ -341,13 +340,13 @@ inline void registerOpcodes(CPU& cpu)
         switch (pair)
         {
             case 0:
-                (*state.BC)++;
+                state.BC++;
                 break;
             case 1:
-                (*state.DE)++;
+                state.DE++;
                 break;
             case 2:
-                (*state.HL)++;
+                state.HL++;
                 break;
             case 3:
                 state.sp++;
@@ -362,13 +361,13 @@ inline void registerOpcodes(CPU& cpu)
         switch (pair)
         {
             case 0:
-                (*state.BC)--;
+                state.BC--;
                 break;
             case 1:
-                (*state.DE)--;
+                state.DE--;
                 break;
             case 2:
-                (*state.HL)--;
+                state.HL--;
                 break;
             case 3:
                 state.sp--;
@@ -379,20 +378,24 @@ inline void registerOpcodes(CPU& cpu)
     cpu.registerOpcode(dcx);
 
     OpcodeDefinition xchg("11101011", [](byte, State& state) -> unsigned int {
-        std::swap(*state.HL, *state.DE);
+        std::swap(state.DE, state.HL);
         return 4;
     });
     cpu.registerOpcode(xchg);
 
     OpcodeDefinition xthl("11100011", [](byte, State& state) -> unsigned int {
-        state.H = state.mem.read(state.sp);
-        state.L = state.mem.read(state.sp + 1);
+        byte tempL = state.mem.read(state.sp);
+        byte tempH = state.mem.read(state.sp + 1);
+        state.mem.write(state.sp, state.L);
+        state.mem.write(state.sp + 1, state.H);
+        state.H = tempH;
+        state.L = tempL;
         return 18;
     });
     cpu.registerOpcode(xthl);
 
-    OpcodeDefinition sphl("11111101", [](byte, State& state) -> unsigned int {
-        state.sp = *state.HL;
+    OpcodeDefinition sphl("11111001", [](byte, State& state) -> unsigned int {
+        state.sp = state.HL;
         return 5;
     });
     cpu.registerOpcode(sphl);
@@ -404,17 +407,19 @@ inline void registerOpcodes(CPU& cpu)
         switch (pair)
         {
             case 0:
-                (*state.BC) = Opcode::fetchWord(state);
+                state.BC = Opcode::fetchWord(state);
                 break;
             case 1:
-                *state.DE = Opcode::fetchWord(state);
+                state.DE = Opcode::fetchWord(state);
                 break;
             case 2:
-                (*state.HL) = Opcode::fetchWord(state);
+                state.HL = Opcode::fetchWord(state);
                 break;
             case 3:
                 state.sp = Opcode::fetchWord(state);
                 break;
+            default:
+                error("lxi : Invalid register pair !");
         }
         return 10;
     });
@@ -429,12 +434,12 @@ inline void registerOpcodes(CPU& cpu)
 
     OpcodeDefinition adi("11000110", [](byte, State& state) -> unsigned int {
         byte val = Opcode::fetchByte(state);
-        checkACarry(state.F, val + state.A, state);
-        checkCarry(state.F, val + state.A);
+        checkACarry(state.F, state.A + val, state);
+        checkCarry(state.F, state.A + val);
+        checkSign(state.F, state.A + val);
+        checkZero(state.F, state.A + val);
+        checkParity(state.F, state.A + val);
         state.A += val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A);
 
         return 7;
     });
@@ -442,12 +447,12 @@ inline void registerOpcodes(CPU& cpu)
 
     OpcodeDefinition aci("11001110", [](byte, State& state) -> unsigned int {
         byte val = Opcode::fetchByte(state) + getFlagC(state.F);
-        checkACarry(state.F, val + state.A, state);
-        checkCarry(state.F, val + state.A);
+        checkACarry(state.F, state.A + val, state);
+        checkCarry(state.F, state.A + val);
+        checkSign(state.F, state.A + val);
+        checkZero(state.F, state.A + val);
+        checkParity(state.F, state.A + val);
         state.A += val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A);
 
         return 7;
     });
@@ -457,31 +462,32 @@ inline void registerOpcodes(CPU& cpu)
         byte val = Opcode::fetchByte(state);
         checkACarry(state.F, state.A - val, state);
         checkCarry(state.F, state.A - val);
+        checkSign(state.F, state.A - val);
+        checkZero(state.F, state.A - val);
+        checkParity(state.F, state.A - val);
         state.A -= val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A);
 
         return 7;
     });
     cpu.registerOpcode(sui);
 
-    OpcodeDefinition sbi("11010110", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition sbi("11011110", [](byte, State& state) -> unsigned int {
         byte val = Opcode::fetchByte(state) + getFlagC(state.F);
         checkACarry(state.F, state.A - val, state);
         checkCarry(state.F, state.A - val);
+        checkSign(state.F, state.A - val);
+        checkZero(state.F, state.A - val);
+        checkParity(state.F, state.A - val);
         state.A -= val;
-        checkSign(state.F, state.A);
-        checkZero(state.F, state.A);
-        checkParity(state.F, state.A);
 
         return 7;
     });
-    cpu.registerOpcode(sui);
+    cpu.registerOpcode(sbi);
 
     OpcodeDefinition ani("11100110", [](byte, State& state) -> unsigned int {
         byte val = Opcode::fetchByte(state);
         state.A &= val;
+        checkACarry(state.F, state.A, state);
         checkCarry(state.F, state.A);
         checkSign(state.F, state.A);
         checkZero(state.F, state.A);
@@ -494,6 +500,7 @@ inline void registerOpcodes(CPU& cpu)
     OpcodeDefinition xri("11101110", [](byte, State& state) -> unsigned int {
         byte val = Opcode::fetchByte(state);
         state.A ^= val;
+        checkACarry(state.F, state.A, state);
         checkCarry(state.F, state.A);
         checkSign(state.F, state.A);
         checkZero(state.F, state.A);
@@ -506,6 +513,7 @@ inline void registerOpcodes(CPU& cpu)
     OpcodeDefinition ori("11110110", [](byte, State& state) -> unsigned int {
         byte val = Opcode::fetchByte(state);
         state.A |= val;
+        checkACarry(state.F, state.A, state);
         checkCarry(state.F, state.A);
         checkSign(state.F, state.A);
         checkZero(state.F, state.A);
@@ -562,13 +570,14 @@ inline void registerOpcodes(CPU& cpu)
     // Jump instructions
 
     OpcodeDefinition pchl("11101001", [](byte, State& state) -> unsigned int {
-        state.pc = *state.HL;
+        state.pc = state.HL;
         return 5;
     });
     cpu.registerOpcode(pchl);
 
     OpcodeDefinition jmp("11000011", [](byte, State& state) -> unsigned int {
-        state.pc = Opcode::fetchWord(state);
+        word addr = Opcode::fetchWord(state);
+        state.pc = addr;
         return 10;
     });
     cpu.registerOpcode(jmp);
@@ -655,113 +664,104 @@ inline void registerOpcodes(CPU& cpu)
 
     // Call subroutine instructions
 
-    OpcodeDefinition call("11001101", [](byte, State& state) -> unsigned int {
-        word addr = Opcode::fetchWord(state);
+    auto commonCall = [](word addr, State& state)
+    {
         state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
         state.mem.write(--state.sp, state.pc & 0xFF);
         state.pc = addr;
+    };
+
+    OpcodeDefinition call("11001101", [commonCall](byte, State& state) -> unsigned int {
+        word addr = Opcode::fetchWord(state);
+
+        commonCall(addr, state);
+
         return 17;
     });
     cpu.registerOpcode(call);
 
-    OpcodeDefinition cc("11011100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cc("11011100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (getFlagC(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
     });
     cpu.registerOpcode(cc);
 
-    OpcodeDefinition cnc("11010100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cnc("11010100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (!getFlagC(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
     });
     cpu.registerOpcode(cnc);
 
-    OpcodeDefinition cz("11001100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cz("11001100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (getFlagZ(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
     });
     cpu.registerOpcode(cz);
 
-    OpcodeDefinition cnz("11000100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cnz("11000100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (!getFlagZ(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
     });
     cpu.registerOpcode(cnz);
 
-    OpcodeDefinition cm("11111100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cm("11111100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (getFlagS(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
     });
     cpu.registerOpcode(cm);
 
-    OpcodeDefinition cp("11110100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cp("11110100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (!getFlagS(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
     });
     cpu.registerOpcode(cp);
 
-    OpcodeDefinition cpe("11101100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cpe("11101100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (getFlagP(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
     });
     cpu.registerOpcode(cpe);
 
-    OpcodeDefinition cpo("11100100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition cpo("11100100", [commonCall](byte, State& state) -> unsigned int {
         word addr = Opcode::fetchWord(state);
-        state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
-        state.mem.write(--state.sp, state.pc & 0xFF);
         if (!getFlagP(state.F))
         {
-            state.pc = addr;
+            commonCall(addr, state);
             return 17;
         }
         return 11;
@@ -770,104 +770,93 @@ inline void registerOpcodes(CPU& cpu)
 
     // Return from subroutine instructions
 
-    OpcodeDefinition ret("11001001", [](byte, State& state) -> unsigned int {
-        byte h = (state.mem.read(state.sp++) << 8);
-        byte l = state.mem.read(state.sp++);
+    auto commonRet = [](State& state)
+    {
+        byte l = (state.mem.read(state.sp++));
+        word h = state.mem.read(state.sp++) << 8;
         state.pc = h | l;
+    };
+
+    OpcodeDefinition ret("11001001", [commonRet](byte, State& state) -> unsigned int {
+        commonRet(state);
         return 10;
     });
     cpu.registerOpcode(ret);
 
-    OpcodeDefinition rc("11011000", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rc("11011000", [commonRet](byte, State& state) -> unsigned int {
         if (getFlagC(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
     });
     cpu.registerOpcode(rc);
 
-    OpcodeDefinition rnc("11010000", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rnc("11010000", [commonRet](byte, State& state) -> unsigned int {
         if (!getFlagC(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
     });
     cpu.registerOpcode(rnc);
 
-    OpcodeDefinition rz("11001100", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rz("11001000", [commonRet](byte, State& state) -> unsigned int {
         if (getFlagZ(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
     });
     cpu.registerOpcode(rz);
 
-    OpcodeDefinition rnz("11000000", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rnz("11000000", [commonRet](byte, State& state) -> unsigned int {
         if (!getFlagZ(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
     });
     cpu.registerOpcode(rnz);
 
-    OpcodeDefinition rm("11111000", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rm("11111000", [commonRet](byte, State& state) -> unsigned int {
         if (getFlagS(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
     });
     cpu.registerOpcode(rm);
 
-    OpcodeDefinition rp("11110000", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rp("11110000", [commonRet](byte, State& state) -> unsigned int {
         if (!getFlagS(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
     });
     cpu.registerOpcode(rp);
 
-    OpcodeDefinition rpe("11101000", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rpe("11101000", [commonRet](byte, State& state) -> unsigned int {
         if (getFlagP(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
     });
     cpu.registerOpcode(rpe);
 
-    OpcodeDefinition rpo("11100000", [](byte, State& state) -> unsigned int {
+    OpcodeDefinition rpo("11100000", [commonRet](byte, State& state) -> unsigned int {
         if (!getFlagP(state.F))
         {
-            byte h = (state.mem.read(state.sp++) << 8);
-            byte l = state.mem.read(state.sp++);
-            state.pc = h | l;
+            commonRet(state);
             return 11;
         }
         return 5;
@@ -880,7 +869,7 @@ inline void registerOpcodes(CPU& cpu)
         byte index = Opcode::getAaa(opcode);
         state.mem.write(--state.sp, (state.pc >> 8) & 0xFF);
         state.mem.write(--state.sp, state.pc & 0xFF);
-        state.pc = index << 3;
+        state.pc = index * 8;
         return 11;
     });
     cpu.registerOpcode(rst);
@@ -894,7 +883,7 @@ inline void registerOpcodes(CPU& cpu)
     cpu.registerOpcode(ei);
 
     OpcodeDefinition di("11110011", [](byte, State& state) -> unsigned int {
-        state.int_enabled = true;
+        state.int_enabled = false;
         return 4;
     });
     cpu.registerOpcode(di);
