@@ -70,7 +70,7 @@ struct State
         void reset();
 };
 
-typedef std::function<unsigned int(byte, State&)> opcodeCallback;
+using opcodeCallback = std::function<unsigned int(byte, State&)>;
 
 } // namespace i8080
 

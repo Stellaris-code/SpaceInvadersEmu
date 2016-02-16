@@ -22,8 +22,6 @@
 #include <functional>
 #include <thread>
 
-#include <iostream>
-
 #include "common.hpp"
 
 #include "motherboard.hpp"

@@ -29,7 +29,7 @@ InvadersBoard::InvadersBoard()
 
 void InvadersBoard::setupScreen(Screen& screen)
 {
-    screen.setVRAMAddr(m_cpu.state().mem.VRAM());
+    screen.setVRAMAddr(m_cpu.state().mem.VRAM().data());
     screen.startRendering();
 
     screen.connect(&screen, &Screen::VBlank, [this]{
@@ -44,7 +44,7 @@ void InvadersBoard::checkHighScore()
 {
     word val = std::max(std::max((m_cpu.state().mem.read(0x20F4) | (m_cpu.state().mem.read(0x20F5) << 8)),
                                  (m_cpu.state().mem.read(0x20F8) | (m_cpu.state().mem.read(0x20F9) << 8))),
-                        m_cpu.state().mem.read(0x20FC) | (m_cpu.state().mem.read(0x20FD) << 8));
+                                  m_cpu.state().mem.read(0x20FC) | (m_cpu.state().mem.read(0x20FD) << 8));
     if (val > m_highScore)
     {
         m_highScore = val;

@@ -18,7 +18,11 @@
 #ifndef OPCODEDEFINITION_HPP
 #define OPCODEDEFINITION_HPP
 
+#include <cassert>
+
 #include <algorithm>
+
+#include <experimental/string_view>
 
 #include "common.hpp"
 #include "cpustate.hpp"
@@ -33,7 +37,7 @@ class OpcodeDefinition
         friend bool operator!=(const OpcodeDefinition& a, const OpcodeDefinition& b);
 
     public:
-        OpcodeDefinition(const std::string& opcodePattern, const opcodeCallback& callback);
+        OpcodeDefinition(char const in_opcodePattern[c_opcodeSize], const opcodeCallback& callback);
 
     public:
         bool isMatching(byte opcode) const;
@@ -42,8 +46,8 @@ class OpcodeDefinition
         { return m_wildcardAmount; }
 
     private:
-        void createBaseAndMask(const std::string& opcodePattern);
-        void checkPattern(const std::string& opcodePattern) const;
+        void createBaseAndMask(std::experimental::string_view opcodePattern);
+        void checkPattern(std::experimental::string_view opcodePattern) const;
 
     private:
         unsigned int m_wildcardAmount { 0 };

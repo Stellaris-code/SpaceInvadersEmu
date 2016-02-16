@@ -20,13 +20,14 @@
 namespace i8080
 {
 
-OpcodeDefinition::OpcodeDefinition(const std::string& opcodePattern, const opcodeCallback& callback)
+OpcodeDefinition::OpcodeDefinition(char const in_opcodePattern[], const opcodeCallback& callback)
     : m_callback(callback)
 {
-    checkPattern(toUpper(opcodePattern));
+    std::experimental::string_view opcodePattern(in_opcodePattern, c_opcodeSize);
+    checkPattern(toUpper(opcodePattern.to_string()));
     if (!m_callback)
     {
-        error("OpcodeDefinition : Invalid Callback ! (" + opcodePattern + ")");
+        error("OpcodeDefinition : Invalid Callback ! (" + opcodePattern.to_string() + ")");
     }
     createBaseAndMask(opcodePattern);
     m_wildcardAmount = std::count(opcodePattern.cbegin(), opcodePattern.cend(), '*');
@@ -42,25 +43,17 @@ unsigned int OpcodeDefinition::execute(byte opcode, State& context) const
     return m_callback(opcode, context);
 }
 
-void OpcodeDefinition::checkPattern(const std::string& opcodePattern) const
+void OpcodeDefinition::checkPattern(std::experimental::string_view opcodePattern) const
 {
-    if (opcodePattern.size() != 8)
-    {
-        error("Opcode pattern size invalid ! (" + opcodePattern + ")");
-    }
+    assert(opcodePattern.size() == 8 && "Opcode pattern size invalid !");
 
-    if(opcodePattern.find_first_not_of("01*") != std::string::npos)
-    {
-        error("Opcode pattern format invalid ! (" + opcodePattern + ")");
-    }
+    assert(opcodePattern.find_first_not_of("01*") == std::string::npos && "Opcode pattern format invalid !");
 
-    if(opcodePattern == "********")
-    {
-        error("Opcode pattern cannot be only wildcards ! ");
-    }
+    assert(opcodePattern != "********" && "Opcode pattern cannot be only wildcards ! ");
+
 }
 
-void OpcodeDefinition::createBaseAndMask(const std::string& opcodePattern)
+void OpcodeDefinition::createBaseAndMask(std::experimental::string_view opcodePattern)
 {
     for (uint8_t i { 0 }; i < 8; ++i)
     {

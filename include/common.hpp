@@ -22,8 +22,8 @@
 
 #include <QSize>
 
-typedef uint8_t byte;
-typedef uint16_t word;
+using byte = uint8_t;
+using word = uint16_t;
 
 constexpr word c_ROMAddr = 0x0000;
 constexpr word c_RAMAddr = 0x2000;
@@ -31,6 +31,8 @@ constexpr word c_VRAMAddr = 0x2400;
 constexpr word c_RAMMirrorAddr = 0x4000;
 
 constexpr unsigned long c_clock_speed = 2000000; // 2 MHz
+
+constexpr size_t c_opcodeSize { 8 };
 
 constexpr QSize c_screen_size = QSize(256, 224);
 

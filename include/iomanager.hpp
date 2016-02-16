@@ -21,6 +21,7 @@
 #include <cassert>
 
 #include <array>
+#include <limits>
 #include <functional>
 
 #include "common.hpp"
@@ -43,8 +44,8 @@ class IOManager
         void mapOutPort(byte port, std::function<void(byte)> callback);
 
     private:
-        std::array<std::function<byte(void)>, 256> m_inports {};
-        std::array<std::function<void(byte)>, 256> m_outports {};
+        std::array<std::function<byte(void)>, std::numeric_limits<byte>::max()> m_inports {};
+        std::array<std::function<void(byte)>, std::numeric_limits<byte>::max()> m_outports {};
 };
 
 }

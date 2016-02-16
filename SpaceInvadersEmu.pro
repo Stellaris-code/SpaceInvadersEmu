@@ -6,7 +6,6 @@
 
 QT       += core gui multimedia
 
-CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,7 +14,7 @@ TEMPLATE = app
 
 DESTDIR=build
 
-QMAKE_CXXFLAGS += -Wextra -O2
+QMAKE_CXXFLAGS += -Wextra -O2 -std=c++14
 
 INCLUDEPATH += include
 
@@ -46,7 +45,8 @@ HEADERS += include/screen.hpp \
     include/invaders/shiftregister.hpp \
     include/motherboard.hpp \
     include/invaders/invadersboard.hpp \
-    include/invaders/soundmanager.hpp
+    include/invaders/soundmanager.hpp \
+    include/array_view/array_view.hpp
 
 FORMS    += ui/mainwindow.ui
 

@@ -20,6 +20,8 @@
 
 #include <array>
 
+#include "array_view/array_view.hpp"
+
 #include "common.hpp"
 
 namespace i8080
@@ -31,37 +33,41 @@ class MemoryManager
         MemoryManager()
         { reset(); }
 
+    private:
+        std::array<byte, 1 << 16> m_memory {}; // 64KB
+
     public:
         byte read(word addr) const;
         void write(word addr, byte data);
         void reset();
-        byte* begin()
+
+        auto begin()
         { return m_memory.begin(); }
-        byte* end()
+        auto end()
         { return m_memory.end(); }
-        byte* RAM()
-        { return begin() + 0x2000; }
-        byte* VRAM()
-        { return begin() + 0x2400; }
-        byte* RAMMirror()
-        { return begin() + 0x4000; }
 
-        const byte* cbegin() const
-        { return m_memory.data(); }
-        const byte* cend() const
+        auto cbegin() const
+        { return m_memory.cbegin(); }
+        auto cend() const
         { return m_memory.cend(); }
-        const byte* ROM() const
-        { return cbegin(); }
-        const byte* RAM() const
-        { return cbegin() + 0x2000; }
-        const byte* VRAM() const
-        { return cbegin() + 0x2400; }
-        const byte* RAMMirror() const
-        { return cbegin() + 0x4000; }
+
+        arv::array_view<byte> RAM()
+        { return arv::array_view<byte>{m_memory.begin() + 0x2000, m_memory.begin() + 0x23FF}; }
+        arv::array_view<byte> VRAM()
+        { return arv::array_view<byte>{m_memory.begin() + 0x2400, m_memory.begin() + 0x3FFF}; }
+        arv::array_view<byte> RAMMirror()
+        { return arv::array_view<byte>{m_memory.begin() + 0x4000, m_memory.end()}; }
+
+        const arv::array_view<byte> ROM() const
+        { return arv::array_view<byte>{m_memory.cbegin(), m_memory.cbegin() + 0x1FFF}; }
+        const arv::array_view<byte> RAM() const
+        { return arv::array_view<byte>{m_memory.begin() + 0x2000, m_memory.begin() + 0x23FF}; }
+        const arv::array_view<byte> VRAM() const
+        { return arv::array_view<byte>{m_memory.begin() + 0x2400, m_memory.begin() + 0x3FFF}; }
+        const arv::array_view<byte> RAMMirror() const
+        { return arv::array_view<byte>{m_memory.begin() + 0x4000, m_memory.end()}; }
 
 
-    private:
-        std::array<byte, 1 << 16> m_memory {}; // 64KB
 };
 
 } // namespace i8080

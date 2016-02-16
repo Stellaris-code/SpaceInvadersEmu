@@ -23,8 +23,6 @@
 #include <QKeyEvent>
 #include <QMap>
 #include <QTimer>
-#include <QStatusBar>
-#include <QLabel>
 #include <QSettings>
 
 #include "cpu.hpp"
