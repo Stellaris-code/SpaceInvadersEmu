@@ -25,11 +25,12 @@
 #include <functional>
 
 #include "common.hpp"
+#include "noncopyable.hpp"
 
 namespace i8080
 {
 
-class IOManager
+class IOManager : private NonCopyable
 {
     public:
        explicit IOManager(const std::function<byte(void)>& inDefaultHandler = []() -> byte { return 0; },

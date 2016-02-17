@@ -46,7 +46,8 @@ HEADERS += include/screen.hpp \
     include/motherboard.hpp \
     include/invaders/invadersboard.hpp \
     include/invaders/soundmanager.hpp \
-    include/array_view/array_view.hpp
+    include/array_view/array_view.hpp \
+    include/noncopyable.hpp
 
 FORMS    += ui/mainwindow.ui
 

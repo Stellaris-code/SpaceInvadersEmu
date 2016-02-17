@@ -21,29 +21,33 @@
 
 #include "mainwindow.hpp"
 
-int main(int argc, char *argv[]) try
+int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setKeyboardInputInterval(0);
     QCoreApplication::setApplicationName("Space Invaders");
 
-    MainWindow w;
-    w.show();
+    try
+    {
+        MainWindow w;
+        w.show();
 
-    return a.exec();
-}
-catch (const i8080::emu_error& e)
-{
-    QMessageBox::critical(nullptr, "Erreur lors de l'émulation", QString("Erreur fatale de l'émulateur : ") + e.what(),
-                          QMessageBox::Close);
-}
-catch (const std::exception& e)
-{
-    QMessageBox::critical(nullptr, "Erreur lors de l'émulation", QString("Erreur fatale : ") + e.what(),
-                          QMessageBox::Close);
-}
-catch (...)
-{
-QMessageBox::critical(nullptr, "Erreur inconnue !?", "Erreur fatale inconnue ! Peut-être plus d'infos dans stderr ?",
-                      QMessageBox::Close);
+        return a.exec();
+    }
+    catch (const i8080::emu_error& e)
+    {
+        QMessageBox::critical(nullptr, "Erreur lors de l'émulation", QString("Erreur fatale de l'émulateur : ") + e.what(),
+                              QMessageBox::Close);
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(nullptr, "Erreur lors de l'émulation", QString("Erreur fatale : ") + e.what(),
+                              QMessageBox::Close);
+    }
+    catch (...)
+    {
+        QMessageBox::critical(nullptr, "Erreur inconnue !?", "Erreur fatale inconnue ! Peut-être plus d'infos dans stderr ?",
+                              QMessageBox::Close);
+    }
+
 }

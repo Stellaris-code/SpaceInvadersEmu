@@ -28,13 +28,14 @@
 #include "cpustate.hpp"
 #include "opcodedefinition.hpp"
 #include "utility.hpp"
+#include "noncopyable.hpp"
 
 class Motherboard;
 
 namespace i8080
 {
 
-class CPU
+class CPU : private NonCopyable
 {
         friend class ::Motherboard;
 

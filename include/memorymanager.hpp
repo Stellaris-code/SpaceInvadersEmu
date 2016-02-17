@@ -23,11 +23,12 @@
 #include "array_view/array_view.hpp"
 
 #include "common.hpp"
+#include "noncopyable.hpp"
 
 namespace i8080
 {
 
-class MemoryManager
+class MemoryManager : private NonCopyable
 {
     public:
         MemoryManager()

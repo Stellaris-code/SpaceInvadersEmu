@@ -1,4 +1,4 @@
-/*  include/shiftregister.hpp ShiftRegister - Yann BOUCHER (yann) 10/02/2016
+/*  noncopyable %{Cpp:License:ClassName} - Yann BOUCHER (yann) 17/02/2016
 **
 **
 **            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
@@ -15,30 +15,17 @@
 **
 **  0. You just DO WHAT THE FUCK YOU WANT TO.
 */
-#ifndef SHIFTREGISTER_HPP
-#define SHIFTREGISTER_HPP
+#ifndef NONCOPYABLE_HPP
+#define NONCOPYABLE_HPP
 
-#include <cassert>
-
-#include "common.hpp"
-#include "noncopyable.hpp"
-
-class ShiftRegister : private NonCopyable
+class NonCopyable
 {
-    public:
-        ShiftRegister() = default;
+    protected:
+        constexpr NonCopyable() = default;
+        ~NonCopyable() = default;
 
-    public:
-        void fill(byte val);
-        void offset(byte off);
-
-        void reset();
-
-        byte result() const;
-
-    private:
-        word m_data { 0 };
-        byte m_offset { 0 };
+         NonCopyable(const NonCopyable&) = delete;
+         NonCopyable& operator=(const NonCopyable&) = delete;
 };
 
-#endif // SHIFTREGISTER_HPP
+#endif // NONCOPYABLE_HPP

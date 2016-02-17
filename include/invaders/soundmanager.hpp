@@ -21,8 +21,9 @@
 #include <QSoundEffect>
 #include <QUrl>
 
+#include "noncopyable.hpp"
 
-class SoundManager
+class SoundManager : private NonCopyable
 {
     public:
         SoundManager();

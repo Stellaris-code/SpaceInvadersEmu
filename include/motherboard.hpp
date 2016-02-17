@@ -22,8 +22,10 @@
 
 #include "cpu.hpp"
 #include "cpustate.hpp"
+#include "utility.hpp"
+#include "noncopyable.hpp"
 
-class Motherboard
+class Motherboard : private NonCopyable
 {
     public:
         Motherboard();
