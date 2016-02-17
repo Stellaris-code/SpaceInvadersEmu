@@ -12,8 +12,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = SpaceInvadersEmu
 TEMPLATE = app
 
-DESTDIR=build
-
 QMAKE_CXXFLAGS += -Wextra -O2 -std=c++14
 
 INCLUDEPATH += include
